@@ -51,7 +51,6 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-3xl shadow-xl p-8 md:p-12 border border-gray-100">
                     <form id="donationForm" class="space-y-8">
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Donor Name</label>
@@ -85,12 +84,12 @@
                         </div>
 
                         <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300">
-                            <p class="text-sm text-gray-500 italic">Note: Upon clicking submit, your pledge will be recorded. Our team will contact you regarding actual payment processing (M-Pesa/Card).</p>
+                            <p class="text-sm text-gray-500 italic">Note: Upon clicking submit, your pledge will be recorded and you will be directed to our secure Paystack shop to complete your payment.</p>
                         </div>
 
                         <button type="submit" id="donateSubmitBtn"
                             class="w-full bg-purple-700 text-white py-4 rounded-xl font-bold text-lg hover:bg-purple-800 transition shadow-lg transform active:scale-95 flex items-center justify-center gap-2">
-                            <span>Continue to Support</span>
+                            <span>Continue to Payment</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
@@ -99,14 +98,7 @@
 
                     <div id="loading" class="hidden py-10 text-center">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700 mx-auto"></div>
-                        <p class="mt-4 text-gray-600 font-medium">Processing your donation pledge...</p>
-                    </div>
-
-                    <div id="successMessage" class="hidden text-center py-10">
-                        <div class="text-6xl mb-4">💜</div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Thank You for Your Support!</h2>
-                        <p class="text-gray-600">Your donation pledge has been recorded in our system. We will reach out to you shortly to complete the process.</p>
-                        <a href="index.html" class="inline-block mt-6 text-purple-700 font-bold hover:underline">Return Home</a>
+                        <p class="mt-4 text-gray-600 font-medium">Recording your pledge and redirecting to Paystack...</p>
                     </div>
                 </div>
             </div>
@@ -117,31 +109,38 @@
         <p class="text-gray-500">© 2025 One Team One Fight. All Rights Reserved.</p>
     </footer>
 
-    <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycby84GYOcyh22znQfTqKyyq8EhvnKTfPQBHCLVusMGUUJX9QhZXwIk4lZUbZyNY-evjv/exec';
-        const form = document.getElementById('donationForm');
-        const loading = document.getElementById('loading');
-        const successMessage = document.getElementById('successMessage');
-        const submitBtn = document.getElementById('donateSubmitBtn');
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyYGLshWi_3w8N9X1OdKex44rZjTn3Wrhgf6MI0i8WPVyad5igt8rSfx0XMbzNy8zjV/exec';
+    const paystackShopURL = 'https://paystack.shop/pay/otof'; 
 
-        form.addEventListener('submit', e => {
-            e.preventDefault(); // Prevents the redirect to the black JSON page
-            
-            form.classList.add('hidden');
-            loading.classList.remove('hidden');
+    const form = document.getElementById('donationForm');
+    const loading = document.getElementById('loading');
 
-            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-                .then(response => {
-                    loading.classList.add('hidden');
-                    successMessage.classList.remove('hidden');
-                })
-                .catch(error => {
-                    form.classList.remove('hidden');
-                    loading.classList.add('hidden');
-                    alert('Error! Please try again later.');
-                    console.error('Error!', error.message);
-                });
-        });
-    </script>
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        
+        // 1. Show loading state
+        form.classList.add('hidden');
+        loading.classList.remove('hidden');
+
+        // 2. Save donor details to Google Sheets first
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            .then(response => response.json())
+            .then(result => {
+                if (result.result === 'success') {
+                    // 3. Redirect to the Paystack shop page
+                    window.location.href = paystackShopURL;
+                } else {
+                    throw new Error(result.error);
+                }
+            })
+            .catch(error => {
+                form.classList.remove('hidden');
+                loading.classList.add('hidden');
+                alert('There was an issue recording your pledge. Please try again.');
+                console.error('Error!', error.message);
+            });
+    });
+</script>
 </body>
 </html>
